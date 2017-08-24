@@ -1,0 +1,88 @@
+*&---------------------------------------------------------------------*
+*& Report  ZCRMTEST2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zcrmtest2.
+
+tables:ekko.
+
+*定义数据类型
+
+TYPES : BEGIN OF ty_po,
+          ebeln TYPE ekko-ebeln, "采购订单编号
+          bsart TYPE ekko-bsart, "采购订单类型
+END OF ty_po.
+
+*不能在内表中直接操作数据，需在工作区中处理数据再插入内表
+
+*定义数据变量
+DATA : it_po TYPE STANDARD TABLE OF ty_po,  "定义内表
+       wa_po TYPE ty_po.                    "定义工作区
+
+* free : it_po.   清空内表
+
+CLEAR : wa_po.  "清空工作区
+wa_po-ebeln = '1'.
+wa_po-bsart = 'Z002'.
+APPEND wa_po TO it_po.
+
+CLEAR : wa_po.  "清空工作区
+wa_po-ebeln = '2'.
+wa_po-bsart = 'Z001'.
+APPEND wa_po TO it_po.
+
+*append <work area> to <itable>：将工作区中的内容添加至内表
+*append lines of <itable1> to <itable2> ：将内表1中的数据添加至内表2中
+
+*使用sort by语句对内表结果进行排序,排序的依据为by后定义的字段
+*sort by语法：sort <itable> [<order way(descending,ascending.默认为ascending)>] [by<f1><f2>...]
+*SORT it_po BY bsart.
+
+*选择屏幕
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE test_01.
+PARAMETERS:"输入一个变量
+l_a(40) TYPE c DEFAULT 'allen' OBLIGATORY,"obligatory设置必输
+l_b TYPE i DEFAULT 12,
+l_c TYPE c DEFAULT 'm',
+l_d AS CHECKBOX DEFAULT 'x',
+l_e AS CHECKBOX.
+SELECT-OPTIONS:l_f FOR ekko-ebeln.
+
+*select-options语法：select-options <chexk options> for <table-field>
+*因为在for后是真正数据库表中的字段，所以在程序开头需使用tables声明相关的表
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+*输出内表
+LOOP AT it_po INTO wa_po.
+  WRITE : / wa_po-ebeln,wa_po-bsart.
+ENDLOOP.
+
+*个人理解：内表中存储的数据，在输出时通过loop循环将内表中的数据从第一行起逐行输出
+
+*内表个人理解为程序运行时内存中存在的一张临时数据表，不同于数据库中的表，可以将数据库中字段任意组合按实际需求组合成相应的内表
+*针对内表同样也有增（append、inseert）、删（delete）、改（modify）、查（read、loop at）四种操作
+
+*append语法如上，在内表中的最后一行插入一条数据
+
+*insert是在内表中的任意位置插入一行数据
+*insert语法：insert <work area> into [initial line to] <itable> [index<idx>]
+*           insert lines of <itable1> to <itable2> index<idx>
+
+*loop at是sap中的循环，可循环读取内表中的数据
+*loop at语法：loop at <itable> into <work area> [where<conditions>]
+
+*read是读取内表中一行数据
+*read语法：read table <itable> into <work area> [index<idx>/with key <conditions>]
+
+*modify用来修改内表中的数据
+*modify语法：modify <itable> from <work area> [index<idx>] [transporting<f1><f2>...] [where<conditions>]
+
+*delete用来删除内表中的数据
+*delete语法：delete <itable> index <idx>
+
+*if，while，do，case
